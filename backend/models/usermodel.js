@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
       type: String,   
       default: ""
     },
-    friendRequests:[ { type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    friendRequests:[{ friendid:{type: mongoose.Schema.Types.ObjectId, ref: "User"}, requesttype:{type:String, enum:['sent', 'received']}}],
     friends:[ { type: mongoose.Schema.Types.ObjectId, ref: "User" }]
   },
 

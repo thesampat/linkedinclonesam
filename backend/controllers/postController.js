@@ -4,15 +4,16 @@ const PostModel = require('../models/postmodel');
 const create_post = async (req, res) => {
   try {
     const { content } = req.body;
+    const {user_id} = req.user
     const file = req.file; 
 
-    if (!content && !file) {
-      return res.status(400).send({ message: "Empty content and file" });
+    if (!content && !file &&!user_id) {
+      return res.status(400).send({ message: "Esomething went wrong" });
     }
 
     const newPost = await PostModel.create({
       content,
-      owner:'691dcccf179d17293599a0cb', 
+      owner:user_id, 
       file: file ? `uploads/${file.filename}` : null,
     });
 
@@ -29,7 +30,6 @@ const update_post = async (req, res) => {
     const { id } = req.params;
     const {content} = req.body||{}
 
-    console.log(content, 'what is content')
     const post = await PostModel.findByIdAndUpdate(
       id,
       {
@@ -48,7 +48,6 @@ const update_post = async (req, res) => {
 const delete_post = async (req, res) => {
   try {
     const { id } = req.params;
-
     await PostModel.findByIdAndDelete(id);
 
     res.send({ message: "Post deleted" });

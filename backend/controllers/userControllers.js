@@ -37,4 +37,49 @@ const authUser = async (req, res) => {
     const userid = payload['sub'];
 }
 
-module.exports = { authUser }
+
+const sendFriendRequest = async (req, res) => {
+    const { user_id } = req.user || {}
+    const { friend_id } = req.body || {}
+
+    if (!user_id && !friend_id) {
+        res.status(400).send('something went wrong')
+    }
+
+    try {
+        await UserModel.updateOne(user_id, { $push: { 'friendRequests': { friend_id: friend_id, requesttype: 'sent' } } })
+        await UserModel.updateOne(friend_id, { $push: { 'friendRequests': { friend_id: user_id, requesttype: 'received' } } })
+        res.send('request sent')
+    } catch (error) {
+        res.send({ data: { message: error?.response?.message || "something went wrong" } })
+    }
+
+
+}
+
+const acceptRejectFriendRequest = async (req, res) => {
+    const { user_id } = req.user || {}
+    const { friend_id, status } = req.body || {}
+
+    if (!user_id && !friend_id) {
+        res.status(400).send('something went wrong')
+    }
+
+    try {
+        await UserModel.updateOne(user_id, { $pull: { 'friendRequests': { friend_id: friend_id, requesttype: 'sent' } }, $push: { 'friends': friend_id } })
+        await UserModel.updateOne(friend_id, { $pull: { 'friendRequests': { friend_id: user_id, requesttype: 'received' } }, $push: { 'friends': user_id } })
+
+        if (status === 'accepted') {
+            await UserModel.updateOne(user_id, { $push: { 'friends': friend_id } })
+            await UserModel.updateOne(friend_id, { $push: { 'friends': user_id } })
+        }
+        res.send('request sent')
+    } catch (error) {
+        res.send({ data: { message: error?.response?.message || "something went wrong" } })
+    }
+
+
+}
+
+
+module.exports = { authUser, sendFriendRequest, acceptRejectFriendRequest}

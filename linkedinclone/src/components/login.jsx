@@ -1,28 +1,26 @@
 import React, { useEffect } from "react";
 import customaxios from "../axios";
 import { toast } from "react-toastify";
-import { set_login_user, set_user_status } from "../../redux/reduxslice";
-import { useReducer } from "react";
+import reducer, { set_login_user, set_user_status } from "../../redux/reduxslice";
 import { useDispatch } from "react-redux";
+import { registerOrLogin } from "../services/authService";
+import { useGetLoginUser } from "../customHooks";
 
-
-const postLogin = async (id, reducer) => {
-  try {
-    let res = await customaxios.post('auth', { googleid: id })
-    reducer(set_login_user(res.data?.data?.user?.[0]))
-    reducer(set_user_status(true))
-  } catch (error) {
-    console.log(error)
-    toast.error(error?.response?.data?.message||'login failed')
-  }
-}
 
 export default function GoogleLogin({ onSuccess }) {
   const userdispatch = useDispatch()
+  const loginuser = useGetLoginUser()
+
+  useEffect(()=>{
+    if(localStorage.getItem('googleid')){
+      registerOrLogin({token:localStorage.getItem('googleid')}).then(res=>{
+        userdispatch(set_login_user(res?.data?.user?.[0]))
+        userdispatch(set_user_status(true))
+      })
+    }
+  }, [])
   
   useEffect(() => {
-
-
     customaxios.get('post').then(res=>{
       console.log(res?.data?.data)
     })
@@ -62,14 +60,13 @@ export default function GoogleLogin({ onSuccess }) {
     );
   }
 
-  const handleResponse=(response)=>{
+  const handleResponse=async(response)=>{
     const id_token = response.credential;
-    try {
-      console.log(id_token)
-      postLogin(id_token, userdispatch)
-    } catch (error) {
-      
-    }
+    localStorage.setItem('googleid', id_token)
+    let data = await registerOrLogin({token:id_token})
+    userdispatch(set_login_user(data?.[0]))
+    userdispatch(set_user_status(true))
+    
   }
 
   return (
