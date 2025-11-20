@@ -1,13 +1,21 @@
 import axios from 'axios'
+import { toast } from 'react-toastify';
 
 const customaxios = axios.create({
   baseURL: import.meta.env.VITE_SERVER_URL,
   timeout: 1000,
   headers: {'X-Custom-Header': 'foobar', "Content-Type": "application/json"},
-  token:localStorage.getItem('adminToken'),
   credentials: "include", 
 });
 
+
+customaxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("googleid");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 let isRetry = false;
 

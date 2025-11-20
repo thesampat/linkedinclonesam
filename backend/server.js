@@ -22,10 +22,11 @@ const userRouter = require('./routes/userRoutes')
 const postRouter = require('./routes/postRoutes')
 const chatRouter = require('./routes/chatRoutes')
 const { error } = require('console')
+const googleAuth= require('./middlewear/googleauth')
 
 
 app.use('/auth', userRouter)
-app.use('/post', postRouter)
+app.use('/post', googleAuth ,postRouter)
 app.use('/chat', chatRouter)
 
 

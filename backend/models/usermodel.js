@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      trim: true
+      trim: true,
     },
 
     name: {
@@ -17,9 +17,7 @@ const userSchema = new mongoose.Schema(
     picture: {
       type: String,   
       default: ""
-    },
-    friendRequests:[{ friendid:{type: mongoose.Schema.Types.ObjectId, ref: "User"}, requesttype:{type:String, enum:['sent', 'received']}}],
-    friends:[ { type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+    }
   },
 
   {

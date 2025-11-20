@@ -1,85 +1,139 @@
 const { OAuth2Client } = require("google-auth-library");
 const UserModel = require("../models/usermodel");
+const { default: mongoose } = require("mongoose");
+const FriendModel = require("../models/friends");
+
+
+const client = new OAuth2Client(process.env.WEB_CLIENT_ID);
+
 
 const authUser = async (req, res) => {
-    const client = new OAuth2Client();
-    let user
-
-    const { googleid } = req.body || {}
+  try {
+    const { googleid } = req.body;
     if (!googleid) {
-        res.status(200).send('no token found')
+      return res.status(400).send({ message: "No Google token received" });
     }
 
+    // VERIFY GOOGLE TOKEN
     const ticket = await client.verifyIdToken({
-        idToken: googleid,
-        audience: process.env.WEB_CLIENT_ID,
+      idToken: googleid,
+      audience: process.env.WEB_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-    const { email, name, picture } = payload || {}
+    const { email, name, picture, sub, exp } = payload;
 
-    try {
-        user = await UserModel.find({ email: email })
-        if (!user) {
-            user = await UserModel.create({ name, email, picture })
-        }
-    } catch (error) {
-        res.status(500).send({ data: { message: "something went wrong" } })
+    // CHECK USER IN DB
+    let user = await UserModel.findOne({ email });
+
+    if (!user) {
+      user = await UserModel.create({
+        name,
+        email,
+        picture,
+        googleId: sub,
+      });
     }
 
-    res.cookie('Cookie', JSON.stringify({ exp: payload.exp, ...user }), {
-        httpOnly: false,
-        secure: false,
-        sameSite: "lax",
-
+    return res.status(200).send({
+      message: "User login successful",
+      data: user,
     });
-    res.status(200).send({ message: 'user login successfull', data: { user } })
-    const userid = payload['sub'];
-}
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: "Server error" });
+  }
+};
+
 
 
 const sendFriendRequest = async (req, res) => {
-    const { user_id } = req.user || {}
-    const { friend_id } = req.body || {}
+  try {
+    const userId = req.user;         
+    const { friend_id } = req.body || {};
 
-    if (!user_id && !friend_id) {
-        res.status(400).send('something went wrong')
+    if (!userId || !friend_id) {
+      return res.status(400).json({ message: "Missing user_id or friend_id" });
     }
 
-    try {
-        await UserModel.updateOne(user_id, { $push: { 'friendRequests': { friend_id: friend_id, requesttype: 'sent' } } })
-        await UserModel.updateOne(friend_id, { $push: { 'friendRequests': { friend_id: user_id, requesttype: 'received' } } })
-        res.send('request sent')
-    } catch (error) {
-        res.send({ data: { message: error?.response?.message || "something went wrong" } })
-    }
+    const senderId = new mongoose.Types.ObjectId(userId);
+    const receiverId = new mongoose.Types.ObjectId(friend_id);
 
+    await FriendModel.updateOne(
+      { user: senderId,  "friendRequests.friendId": { $ne: receiverId } },
+      
+      {
+        $addToSet: {
+          friendRequests: {
+            friendId: receiverId,
+            requestType: "sent",
+          },
+        },
+      },{upsert:true}
+    );
 
-}
+    await FriendModel.updateOne(
+      { user: receiverId,  "friendRequests.friendId": { $ne: senderId } },
+      {
+        $addToSet: {
+          friendRequests: {
+            friendId: senderId,
+            requestType: "received",
+          },
+        },
+      }, {upsert:true}
+    );
+
+    return res.json({ message: "Friend request sent successfully" });
+  } catch (error) {
+    console.error("Friend request error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 const acceptRejectFriendRequest = async (req, res) => {
-    const { user_id } = req.user || {}
-    const { friend_id, status } = req.body || {}
+  try {
+    const user_id = req.user; 
+    const { friend_id, status } = req.body;
 
-    if (!user_id && !friend_id) {
-        res.status(400).send('something went wrong')
+    if (!user_id || !friend_id || !status) {
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-    try {
-        await UserModel.updateOne(user_id, { $pull: { 'friendRequests': { friend_id: friend_id, requesttype: 'sent' } }, $push: { 'friends': friend_id } })
-        await UserModel.updateOne(friend_id, { $pull: { 'friendRequests': { friend_id: user_id, requesttype: 'received' } }, $push: { 'friends': user_id } })
+    const userId = new mongoose.Types.ObjectId(user_id);
+    const friendId = new mongoose.Types.ObjectId(friend_id);
 
-        if (status === 'accepted') {
-            await UserModel.updateOne(user_id, { $push: { 'friends': friend_id } })
-            await UserModel.updateOne(friend_id, { $push: { 'friends': user_id } })
-        }
-        res.send('request sent')
-    } catch (error) {
-        res.send({ data: { message: error?.response?.message || "something went wrong" } })
+    // Remove request from both users
+    await FriendModel.updateOne(
+      { user: userId },
+      { $pull: { friendRequests: { friendId: friendId } } }
+    );
+
+    await FriendModel.updateOne(
+      { user: friendId },
+      { $pull: { friendRequests: { friendId: userId } } }
+    );
+
+    if (status === "accepted") {
+      await FriendModel.updateOne(
+        { user: userId },
+        { $addToSet: { friends: friendId } }
+      );
+      await FriendModel.updateOne(
+        { user: friendId },
+        { $addToSet: { friends: userId } }
+      );
     }
 
+    return res.json({ message: `Friend request ${status}` });
 
-}
+  } catch (error) {
+    console.error("Friend request action error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 module.exports = { authUser, sendFriendRequest, acceptRejectFriendRequest}

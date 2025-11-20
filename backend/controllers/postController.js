@@ -1,19 +1,22 @@
 const fs = require('fs');
 const PostModel = require('../models/postmodel');
+const { default: mongoose } = require('mongoose');
+const { error } = require('console');
 
 const create_post = async (req, res) => {
   try {
     const { content } = req.body;
-    const {user_id} = req.user
-    const file = req.file; 
+    const user_id = req.user
+    const file = req.files?.[0];
 
-    if (!content && !file &&!user_id) {
-      return res.status(400).send({ message: "Esomething went wrong" });
+
+    if ((!content || !file) && !user_id) {
+      return res.status(400).send({ message: "something went wrong" });
     }
 
     const newPost = await PostModel.create({
       content,
-      owner:user_id, 
+      author: user_id,
       file: file ? `uploads/${file.filename}` : null,
     });
 
@@ -28,10 +31,14 @@ const create_post = async (req, res) => {
 const update_post = async (req, res) => {
   try {
     const { id } = req.params;
-    const {content} = req.body||{}
+    const { content } = req.body || {}
+    const user_id = req.user
 
-    const post = await PostModel.findByIdAndUpdate(
-      id,
+    const post = await PostModel.findOneAndUpdate(
+      {
+        _id: new mongoose.Types.ObjectId(id),
+        author: new mongoose.Types.ObjectId(user_id)
+      },
       {
         content: content,
         file: req.file ? `uploads/${req.file.filename}` : undefined,
@@ -39,8 +46,17 @@ const update_post = async (req, res) => {
       { new: true }
     );
 
+
+    if (!post) {
+      return res.status(404).send({
+        message: "Post not found or you are not the owner",
+      });
+    }
+
+
     res.send({ message: "Post updated", data: post });
   } catch (err) {
+    console.log(err)
     res.status(500).send({ message: "Server error" });
   }
 };
@@ -48,7 +64,21 @@ const update_post = async (req, res) => {
 const delete_post = async (req, res) => {
   try {
     const { id } = req.params;
-    await PostModel.findByIdAndDelete(id);
+    const user_id = req.user
+
+    const post = await PostModel.findOneAndDelete(
+      {
+        _id: new mongoose.Types.ObjectId(id),
+        author: new mongoose.Types.ObjectId(user_id)
+      }
+    );
+
+    if (!post) {
+      return res.status(404).send({
+        message: "Post not found or you are not the owner",
+      });
+    }
+
 
     res.send({ message: "Post deleted" });
   } catch (err) {
@@ -57,6 +87,7 @@ const delete_post = async (req, res) => {
 };
 
 const get_all_posts = async (req, res) => {
+  const user = req.user
   try {
     console.log(req.cookies, 'what is cookies')
     const posts = await PostModel.find().sort({ createdAt: -1 });
@@ -66,4 +97,4 @@ const get_all_posts = async (req, res) => {
   }
 };
 
-module.exports = { create_post, get_all_posts, update_post, delete_post}
+module.exports = { create_post, get_all_posts, update_post, delete_post }
