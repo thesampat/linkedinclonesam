@@ -5,7 +5,8 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { Server } = require("socket.io");
 const http = require("http");
-
+const path = require('path')
+const fs = require('fs')
 
 
 app.use(express.json())
@@ -13,6 +14,38 @@ app.use(cookieParser('anhsecre'))
 app.use(cors({}))
 app.use(express.static('uploads'))
 
+
+app.get("/uploads/:filename", (req, res) => {
+  const filePath = path.join(__dirname, "uploads", req.params.filename);
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    const chunkSize = end - start + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": "video/mp4"
+    });
+
+    file.pipe(res);
+  } else {
+    res.writeHead(200, {
+      "Content-Length": fileSize,
+      "Content-Type": "video/mp4"
+    });
+    fs.createReadStream(filePath).pipe(res);
+  }
+});
 
 const port = 4000
 
@@ -29,7 +62,7 @@ const { sendMessage } = require('./controllers/chatController')
 
 
 app.use('/auth', userRouter)
-app.use('/post', postRouter)
+app.use('/post', googleAuth ,postRouter)
 app.use('/chat', googleAuth, chatRouter)
 
 
@@ -47,8 +80,8 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
 
   socket.on("join-room", (roomId) => {
+    console.log('rooomm joined',roomId)
     socket.join(roomId);
-    console.log('user joined room', roomId, socket.id)
   });
 
   socket.on('chat', async (msg) => {
@@ -57,6 +90,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on('friend-response', async (msg) => {
+    console.log(msg)
     io.to(msg?.user?.sender).emit("friend-response", msg?.user)
   })
   

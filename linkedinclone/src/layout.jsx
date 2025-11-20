@@ -5,6 +5,16 @@ import { socket } from "./socket";
 import { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { set_friends } from "../redux/reduxslice";
+import { IoSearch } from "react-icons/io5";
+import { BiSolidHome } from "react-icons/bi";
+import { IoPeopleSharp } from "react-icons/io5";
+import { FaSuitcase } from "react-icons/fa";
+import { MdMessage } from "react-icons/md";
+import { IoNotificationsSharp } from "react-icons/io5";
+
+
+
+
 
 
 function SplitButtons({ closeToast, title }) {
@@ -59,7 +69,7 @@ export default function Layout() {
           user: msg,
         });
 
-        navi(`chat/${msg?.user}/${msg?.name}`);
+        navi(`chat/${msg?.sender}/${msg?.name}`);
       }
     };
 
@@ -78,19 +88,59 @@ export default function Layout() {
     });
 
     socket.on("friend-response", (msg) => {
-      navi(`chat/${msg?.sender}/${msg?.name}`);
+      navi(`chat/${msg?.receiver}/${msg?.name}`);
     });
-  }, []); // 👈 IMPORTANT: empty dependency
+  }, []); 
 
   return (
-    <div>
-      <div className="header flex jusity-center items-center gap-10 bg-white/100 p-2 rounded">
-        <button onClick={() => navi(-1)}>Back</button>
-        <NavLink to={"chat"}>Chat</NavLink>
-        <NavLink to={"home"}>Feed</NavLink>
-        <img src={user?.picture} alt="" className="w-10 h-10" />
+    <div className="mainwrapper w-screen overflow-x-hidden">
+      <div className="header flex justify-center items-center bg-white w-full">
+        <div className="innerheader flex justify-between gap-20">
+        <div className="logoAndSearch flex items-center justify-center gap-10">
+          <div className="logoin bg-black rounded w-10 h-10 flex justify-center items-center">
+            <p className="text-white font-semibold text-4xl">in</p>
+          </div>
+          <div className="relative">
+          <input type="text" placeholder="Search" className="ps-10 text-black outline-none border border-gray-400 max-w-[300px] rounded-full py-1.5 w-100 hidden md:block" name="" id="" />
+          <IoSearch className="w-5 h-5 text-black absolute top-2 left-3 hidden md:block"/>
+          </div>
+
+        </div>
+        <div className="navs flex justify-center gap-5 py-2">
+                <NavLink className='flex flex-col items-center justify-center' to={"home"}>
+                  <BiSolidHome className="h-6 w-6 text-gray-600"/>
+                  <p className="text-gray-500 text-sm">Home</p>
+                  </NavLink>
+
+                   <NavLink className='flex flex-col items-center justify-center' to={"home"}>
+                  <IoPeopleSharp className="h-6 w-6 text-gray-600"/>
+                  <p className="text-gray-500 text-sm">Network</p>
+                  </NavLink>
+                  <NavLink className='flex flex-col items-center justify-center' to={"home"}>
+                  <FaSuitcase className="h-6 w-6 text-gray-600"/>
+                  <p className="text-gray-500 text-sm">Jobs</p>
+                  </NavLink>
+                  <NavLink className='flex flex-col items-center justify-center' to={"home"}>
+                  <MdMessage className="h-6 w-6 text-gray-600"/>
+                  <p className="text-gray-500 text-sm">Chat</p>
+                  </NavLink>
+                  <NavLink className='flex flex-col items-center justify-center' to={"home"}>
+                  <IoNotificationsSharp className="h-6 w-6 text-gray-600"/>
+                  <p className="text-gray-500 text-sm">Notification</p>
+                  </NavLink>
+                  <div className='flex flex-col items-center justify-center'>
+                  <img src={user?.picture} alt="" className="w-6 h-6 rounded-full" />
+                  <p className="text-gray-500 text-sm">Me</p>
+                  </div>
+                  </div>
+        </div>
+
       </div>
+      <div className="w-full flex justify-center mt-4 p-0 m-0">
+    <div className="max-w-[900px] w-full px-4">
       <Outlet />
+    </div>
+  </div>
     </div>
   );
 }

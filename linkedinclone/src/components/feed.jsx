@@ -1,100 +1,116 @@
 import React, { useEffect, useState } from "react";
-import { getPosts } from "../services/postsServices";
+import { createPost, getPosts } from "../services/postsServices";
 import { useNavigate } from "react-router";
 import { useGetLoginUser } from "../customHooks";
 import { socket } from "../socket";
+import { IoClose } from "react-icons/io5";
+import { MdPermMedia } from "react-icons/md";
+import { toast } from "react-toastify";
+
+
 
 export default function Feed() {
+  const [open, setOpen] = useState(false);
   const [posts, setPosts] = useState([]);
   const navigate = useNavigate();
   const loginUser = useGetLoginUser()
 
-  useEffect(() => {
-    
-    if (loginUser?._id) {
-    socket.emit('join-room', loginUser._id);
-  }
-
+  const fetchPosts = () => {
     getPosts().then((res) => {
       setPosts(res?.data || []);
     });
+  }
+  useEffect(() => {
+
+    if (loginUser?._id) {
+      socket.emit('join-room', loginUser._id);
+    }
+
+    fetchPosts()
   }, [loginUser]);
 
 
-  const handleChat=async(post)=>{
-    let {_id, name, picture} = post?.authorData||{}
-    if(loginUser?.friends?.includes(post?.author)){
-          navigate(`/chat/${post.authorData?._id}/${post.authorData?.name}`)
-    }else{
-      socket.emit('friend-request', {receiver:post?.authorData?._id, name, picture, sender:loginUser._id})
+  const handleChat = async (post) => {
+    let { _id, name, picture } = post?.authorData || {}
+    if (loginUser?.friends?.includes(post?.author)) {
+      navigate(`/chat/${post.authorData?._id}/${post.authorData?.name}`)
+    } else {
+      socket.emit('friend-request', { receiver: post?.authorData?._id, name, picture, sender: loginUser._id })
     }
-    
+
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-100 flex justify-center">
-      
-      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-12 gap-6 mt-6 px-3">
+    <div className="bg-gray-100 flex justify-center ">
 
-        <div className="hidden md:block md:col-span-3">
-          <div className="bg-white p-4 rounded-xl shadow-sm sticky top-4">
-            <h2 className="font-semibold text-xl mb-3">Your Profile</h2>
-            <p className="text-sm text-gray-600">Quick links & shortcuts</p>
+      <div className="w-full flex justify-center items-start gap-6 mt-6 px-3">
 
-            <div className="mt-4 space-y-2 text-gray-800">
-              <p className="hover:text-blue-600 cursor-pointer">My Posts</p>
-              <p className="hover:text-blue-600 cursor-pointer">Messages</p>
-              <p className="hover:text-blue-600 cursor-pointer">Settings</p>
+        <div className="basis-3xl">
+          <div className="bg-white relative gap-3 rounded-lg border border-gray-300/80 mb-4">
+            <div className="bg-gray-400 h-15 w-full"></div>
+            <img src={loginUser?.picture} className="w-12 h-12 rounded-full absolute left-4 top-10" alt="" />
+            <div className="description flex flex-col justify-start items-start mt-8 m-3">
+              <p className="text-black font-semibold text-nowrap text-lg">{loginUser?.name}</p>
+              <p className="text-black text-[12px]">Mern Remove Developer</p>
+              <p className="text-gray-600 text-[12px]">Bangalore, karnataka</p>
             </div>
+          </div>
+          <div className="bg-white flex flex-col justify-between items-start p-5 gap-3 rounded-lg border border-gray-300/80">
+            <div className="flex w-full justify-between"><p className="text-gray-700 font-semibold text-[14px]">Profile viewers</p><p className="text-blue-600 font-semibold text-[12px]">110</p></div>
+            <div className="flex w-full justify-between"><p className="text-gray-700 font-semibold text-[14px]">Post impressions</p><p className="text-blue-600 font-semibold text-[12px]">110</p></div>
           </div>
         </div>
 
-        {/* MIDDLE FEED */}
-        <div className="md:col-span-6 flex flex-col gap-5">
+        <div className="basis-7xl">
+          <div className="profilesection bg-white flex justify-center items-center p-5 gap-3 rounded-lg border border-gray-300/80">
+            <img src={loginUser?.picture} className="w-12 h-12 rounded-full" alt="" />
+            <button onClick={() => setOpen(true)} className=" w-full h-12 text-start text-gray-600 ps-5 font-semibold cursor-pointer  border bg-none border-gray-500 outline-none rounded-full">
+              Start a post
+            </button>
+
+          </div>
+          <br />
+          <div className="chat windiw flex flex-col gap-5 h-screen overflow-y-auto custom-scroll p-2">
           {posts.map((post) => (
             <div
               key={post._id}
               className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
             >
-              {/* Header */}
               <div className="flex items-center gap-3 p-3">
                 <img
                   src={post.authorData?.picture}
                   className="w-10 h-10 rounded-full object-cover"
                 />
                 <div>
-                  <h2 className="font-semibold text-base capitalize">
+                  <h2 className="font-semibold text-base text-black capitalize">
                     {post.authorData?.name}
                   </h2>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 text-start p-2">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="px-3 pb-3 text-gray-800 text-sm">
+              <div className="px-3 pb-3 text-gray-800 text-sm text-start bg-gray-50">
                 {post.content}
               </div>
 
-              {/* Media */}
               {post.file && (
                 <div className="w-full bg-gray-50">
                   {post.file.endsWith(".mp4") ? (
-                    <video src={post.file} controls className="w-full" />
+                    <video src={import.meta.env.VITE_SERVER_URL+"uploads/" +post.file} controls className="w-full" />
                   ) : (
                     <img
-                      src={post.file}
+                      src={import.meta.env.VITE_SERVER_URL+post.file}
                       className="w-full max-h-[380px] object-cover"
                     />
                   )}
                 </div>
               )}
 
-              {/* Footer Button */}
               <div className="p-3">
                 <button
-                  onClick={()=>handleChat(post)}
+                  onClick={() => handleChat(post)}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition"
                 >
                   Chat
@@ -102,10 +118,11 @@ export default function Feed() {
               </div>
             </div>
           ))}
+          </div>
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <div className="hidden md:block md:col-span-3">
+        <div className="basis-7xl">
           <div className="bg-white p-4 rounded-xl shadow-sm sticky top-4">
             <h2 className="font-semibold text-lg mb-3">Suggested Users</h2>
 
@@ -128,6 +145,130 @@ export default function Feed() {
 
             </div>
           </div>
+        </div>
+
+      </div>
+      {open && <CreatePost close={() => setOpen(false)}  fetchPosts={fetchPosts}/>}
+    </div>
+  );
+}
+
+
+const CreatePost = ({ close, fetchPosts }) => {
+  const [content, setContent] = useState("");
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [fileType, setFileType] = useState(null);
+  const loginUser = useGetLoginUser()
+
+
+  const handleFile = (e) => {
+    const uploaded = e.target.files?.[0];
+    if (!uploaded) return;
+
+    setFile(uploaded);
+
+    const type = uploaded.type;
+
+    if (type.startsWith("image/")) {
+      setFileType("image");
+    } else if (type.startsWith("video/")) {
+      setFileType("video");
+    } else {
+      alert("Only image or video allowed");
+      return;
+    }
+
+    setFilePreview(URL.createObjectURL(uploaded));
+  };
+
+  const handlePost = async () => {
+    const formData = new FormData();
+    formData.append("content", content);
+
+    if (file) {
+      formData.append("file", file);
+    }
+
+    try {
+      await createPost({ data: formData })
+      toast.success("post created")
+      fetchPosts()
+      close()
+      close();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+
+      <div className="bg-white w-[90%] max-w-[600px] rounded-xl shadow-lg px-4">
+
+        {/* HEADER */}
+        <div className="flex justify-end items-end border-b pb-2">
+          <IoClose
+            className="text-2xl font-bold cursor-pointer text-black m-3 my-4"
+            onClick={close}
+          />
+        </div>
+
+        {/* USER INFO */}
+        <div className="flex items-center gap-3">
+          <img
+            src={loginUser?.picture}
+            alt="user"
+            className="w-10 h-10 rounded-full"
+          />
+          <p className="font-medium text-black font-semibold text-xl">{loginUser?.name}</p>
+        </div>
+
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Share your thoughts..."
+          className="w-full text-black mt-4 p-4 h-32 outline-none resize-none text-lg"
+        />
+
+        {/* PREVIEW */}
+        {filePreview && fileType === "image" && (
+          <div className="mt-3">
+            <img src={filePreview} className="rounded-lg max-h-60 object-cover" />
+          </div>
+        )}
+
+        {filePreview && fileType === "video" && (
+          <div className="mt-3">
+            <video src={filePreview} className="rounded-lg max-h-60 w-full" controls />
+          </div>
+        )}
+
+        {/* UPLOAD BUTTON */}
+        <div className="mt-4">
+          <label className="cursor-pointer flex items-center">
+            <MdPermMedia className="w-8 h-8 text-gray-600" />
+            <span className="text-black ps-4">Upload Image/Video</span>
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*,video/*"
+              onChange={handleFile}
+            />
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end m-4">
+          <button
+            onClick={handlePost}
+            disabled={!content && !file}
+            className={`px-6 py-2 rounded-full text-white font-semibold
+              ${content || file ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-gray-300 cursor-not-allowed"}
+            `}
+          >
+            Post
+          </button>
         </div>
 
       </div>

@@ -21,6 +21,10 @@ async function getChatHistory(req, res) {
     const userId = req.user||{};
     const { otherUserId } = req.params;
 
+  if(!userId && !otherUserId){
+    res.status(400).send('invalid users')
+  }
+
     console.log(userId, otherUserId)
     const chats = await ChatModel.find({
       $or: [

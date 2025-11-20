@@ -9,6 +9,8 @@ const create_post = async (req, res) => {
     const user_id = req.user
     const file = req.files?.[0];
 
+    console.log(req.body, 'why not okay please')
+
 
     if ((!content || !file) && !user_id) {
       return res.status(400).send({ message: "something went wrong" });

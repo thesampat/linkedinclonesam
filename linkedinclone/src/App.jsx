@@ -4,14 +4,10 @@ import { set_friends, set_login_user, set_user_status } from "../redux/reduxslic
 import { registerOrLogin } from "./services/authService";
 import approuters from './routers'
 import { RouterProvider } from "react-router/dom";
-
-
 import './App.css'
-import { socket } from "./socket";
-import { useState } from "react";
 import React from "react";
 import { ToastContainer, toast } from 'react-toastify';
-import { useNavigate } from "react-router";
+
 
 
 
