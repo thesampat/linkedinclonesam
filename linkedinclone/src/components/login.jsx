@@ -51,7 +51,7 @@ export default function GoogleLogin() {
     const id_token = response.credential;
     localStorage.setItem('googleid', id_token)
     let data = await registerOrLogin({token:id_token})
-    userdispatch(set_login_user(data?.user?.[0]))
+    userdispatch(set_login_user(data?.data))
     userdispatch(set_user_status(true))
     
   }
