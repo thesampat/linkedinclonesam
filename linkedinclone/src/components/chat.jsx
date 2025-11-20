@@ -18,6 +18,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (user && loginUser?._id) {
+      console.log(loginUser?._id, user, 'shou ddifff')
       let roomIdInstant = createRoom(loginUser?._id, user);
       setroomid(roomIdInstant)
       socket.emit('join-room', roomIdInstant)

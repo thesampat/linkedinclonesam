@@ -48,7 +48,7 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", (roomId) => {
     socket.join(roomId);
-    console.log('user joined room', roomId)
+    console.log('user joined room', roomId, socket.id)
   });
 
   socket.on('chat', async (msg) => {
@@ -57,12 +57,11 @@ io.on("connection", (socket) => {
   })
 
   socket.on('friend-response', async (msg) => {
-    console.log('emmiting to', msg.user?.friend)
-    io.to(msg.user?.friend).emit("friend-response", msg?.user)
+    io.to(msg?.user?.sender).emit("friend-response", msg?.user)
   })
   
   socket.on('friend-request', async (msg) => {
-    io.to(msg.friend).emit("friend-request", {msg})
+    io.to(msg.receiver).emit("friend-request", {msg})
   })
 
   socket.on("disconnect", () => {

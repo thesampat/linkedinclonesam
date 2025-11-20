@@ -10,7 +10,11 @@ export default function Feed() {
   const loginUser = useGetLoginUser()
 
   useEffect(() => {
-    socket.emit('join-room', loginUser?._id)
+    
+    if (loginUser?._id) {
+    socket.emit('join-room', loginUser._id);
+  }
+
     getPosts().then((res) => {
       setPosts(res?.data || []);
     });
@@ -22,7 +26,7 @@ export default function Feed() {
     if(loginUser?.friends?.includes(post?.author)){
           navigate(`/chat/${post.authorData?._id}/${post.authorData?.name}`)
     }else{
-      socket.emit('friend-request', {friend:post?.authorData?._id, name, picture})
+      socket.emit('friend-request', {receiver:post?.authorData?._id, name, picture, sender:loginUser._id})
     }
     
   }
