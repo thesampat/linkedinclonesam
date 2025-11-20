@@ -11,6 +11,8 @@ const http = require("http");
 app.use(express.json())
 app.use(cookieParser('anhsecre'))
 app.use(cors({}))
+app.use(express.static('uploads'))
+
 
 const port = 4000
 
@@ -22,12 +24,13 @@ const userRouter = require('./routes/userRoutes')
 const postRouter = require('./routes/postRoutes')
 const chatRouter = require('./routes/chatRoutes')
 const { error } = require('console')
-const googleAuth= require('./middlewear/googleauth')
+const googleAuth = require('./middlewear/googleauth')
+const { sendMessage } = require('./controllers/chatController')
 
 
 app.use('/auth', userRouter)
-app.use('/post', googleAuth ,postRouter)
-app.use('/chat', chatRouter)
+app.use('/post', postRouter)
+app.use('/chat', googleAuth, chatRouter)
 
 
 const server = http.createServer(app);
@@ -40,13 +43,37 @@ const io = new Server(server, {
 })
 
 
+
 io.on("connection", (socket) => {
-  console.log("a user connected:", socket.id);
+
+  socket.on("join-room", (roomId) => {
+    socket.join(roomId);
+    console.log('user joined room', roomId)
+  });
+
+  socket.on('chat', async (msg) => {
+    await sendMessage(msg)
+    io.to(msg.roomId).emit("chat", msg)
+  })
+
+  socket.on('friend-response', async (msg) => {
+    console.log('emmiting to', msg.user?.friend)
+    io.to(msg.user?.friend).emit("friend-response", msg?.user)
+  })
+  
+  socket.on('friend-request', async (msg) => {
+    io.to(msg.friend).emit("friend-request", {msg})
+  })
 
   socket.on("disconnect", () => {
     console.log("user disconnected:", socket.id);
   });
 });
+
+
+
+
+
 
 
 server.listen(port, () => {

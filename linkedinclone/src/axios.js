@@ -25,19 +25,10 @@ customaxios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !isRetry) {
-      isRetry = true;
+    if(error?.response?.data?.message === 'Invalid Google token'){
+      localStorage.clear()
+      toast.error("Session expired. Please login again");
 
-      try {
-        await customaxios.get("/auth/refresh");
-
-        isRetry = false;
-        return customaxios(originalRequest); 
-      } catch (refreshErr) {
-        isRetry = false;
-        toast.error("Session expired. Please login again");
-        return Promise.reject(refreshErr);
-      }
     }
 
     const message =

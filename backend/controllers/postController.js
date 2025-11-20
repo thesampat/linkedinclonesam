@@ -17,7 +17,7 @@ const create_post = async (req, res) => {
     const newPost = await PostModel.create({
       content,
       author: user_id,
-      file: file ? `uploads/${file.filename}` : null,
+      file: file ? `${file.filename}` : null,
     });
 
     res.send({ message: "Post created", data: newPost });
@@ -41,7 +41,7 @@ const update_post = async (req, res) => {
       },
       {
         content: content,
-        file: req.file ? `uploads/${req.file.filename}` : undefined,
+        file: req.file ? `${req.file.filename}` : undefined,
       },
       { new: true }
     );
@@ -89,8 +89,32 @@ const delete_post = async (req, res) => {
 const get_all_posts = async (req, res) => {
   const user = req.user
   try {
-    console.log(req.cookies, 'what is cookies')
-    const posts = await PostModel.find().sort({ createdAt: -1 });
+    const posts = await PostModel.aggregate([
+  {
+    $lookup: {
+      from: "users",            
+      localField: "author",     
+      foreignField: "_id",      
+      as: "authorData",
+       pipeline: [
+        {
+          $project: {
+            name: 1,
+            email: 1,
+            picture: 1,
+            _id: 1    
+          }
+        }
+      ]
+    }
+  },
+  { 
+    $unwind: "$authorData"     
+  },
+  {
+    $sort: { createdAt: -1 }
+  }
+]);
     res.send({ data: posts });
   } catch (err) {
     res.status(500).send({ message: "Server error" });

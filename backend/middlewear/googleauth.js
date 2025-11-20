@@ -13,8 +13,6 @@ const googleAuth=async(req, res, next)=> {
 
     const token = header.split(" ")[1]; 
 
-    console.log(token, 'what is token ow')
-
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.WEB_CLIENT_ID,

@@ -1,29 +1,89 @@
+import React, { useState } from "react";
+import { useLocation, useParams } from "react-router";
+import { socket } from "../socket";
+import { useGetLoginUser } from "../customHooks";
 import { useEffect } from "react";
-import { io } from "socket.io-client";
+import { getChats } from "../services/chatServices";
+
+const createRoom = (me, otherUser) => {
+  return [me, otherUser].sort().join("_");
+};
 
 export default function ChatPage() {
+  const [text, setText] = useState("");
+  const [messages, setmessages] = useState()
+  const { user, name, picture } = useParams()
+  const loginUser = useGetLoginUser()
+  const [roomid, setroomid] = useState()
 
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_SERVER_URL, {
-      transports: ["websocket"],
-      auth: {
-        userId: localStorage.getItem("id")
-      }
-    });
+    if (user && loginUser?._id) {
+      let roomIdInstant = createRoom(loginUser?._id, user);
+      setroomid(roomIdInstant)
+      socket.emit('join-room', roomIdInstant)
+      getChats(user).then(f => {
+        setmessages(f?.data)
+        console.log('settined')
+      })
+    }
+    
+  }, [user, loginUser?._id])
 
-    socket.on("connect", () => {
-      console.log("Connected:", socket.id);
-    });
+  useEffect(()=>{
+    socket.on('chat', (msg)=>{
+      setmessages(prev=>[...prev, msg])
+    })
+  }, [0])
 
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
+  const handleSend = () => {
+    if (!text.trim()) return;
+    socket.timeout(5000).emit("chat", { sender: loginUser?._id, receiver: user, message: text, roomId:roomid });
+    setText('')
+  };
 
-    return () => {
-      socket.disconnect();
-      console.log("Socket closed");
-    };
-  }, []);
 
-  return <div>Chat window</div>;
+  return (
+    <div className="flex flex-col h-full bg-white shadow-lg rounded-xl overflow-hidden">
+
+      {/* Header */}
+      <div className="p-4 border-b flex items-center gap-3 bg-blue-600 text-white">
+        <img src={picture} alt="" srcset="" className="w-10 h-10 rounded-full" />
+        <h2 className="text-lg font-semibold">{name}</h2>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        {messages?.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`max-w-xs px-3 py-2 rounded-lg text-sm ${msg?.sender === loginUser?._id
+                ? "bg-blue-600 text-white ml-auto"
+                : "bg-gray-200 text-gray-800"
+              }`}
+          >
+            {msg.message}
+          </div>
+        ))}
+      </div>
+
+      {/* Input Box */}
+      <div className="p-3 border-t bg-white flex gap-2">
+        <input
+          type="text"
+          className="flex-1 px-3 text-black py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Type a message..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+        />
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold"
+          onClick={handleSend}
+        >
+          Send
+        </button>
+      </div>
+
+    </div>
+  );
 }

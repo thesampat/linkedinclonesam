@@ -7,24 +7,11 @@ import { registerOrLogin } from "../services/authService";
 import { useGetLoginUser } from "../customHooks";
 
 
-export default function GoogleLogin({ onSuccess }) {
+export default function GoogleLogin() {
   const userdispatch = useDispatch()
-  const loginuser = useGetLoginUser()
 
-  useEffect(()=>{
-    if(localStorage.getItem('googleid')){
-      registerOrLogin({token:localStorage.getItem('googleid')}).then(res=>{
-        userdispatch(set_login_user(res?.data?.user?.[0]))
-        userdispatch(set_user_status(true))
-      })
-    }
-  }, [])
   
   useEffect(() => {
-    customaxios.get('post').then(res=>{
-      console.log(res?.data?.data)
-    })
-
     const scriptId = "google-login-script";
 
     if (!document.getElementById(scriptId)) {
@@ -64,7 +51,7 @@ export default function GoogleLogin({ onSuccess }) {
     const id_token = response.credential;
     localStorage.setItem('googleid', id_token)
     let data = await registerOrLogin({token:id_token})
-    userdispatch(set_login_user(data?.[0]))
+    userdispatch(set_login_user(data?.user?.[0]))
     userdispatch(set_user_status(true))
     
   }

@@ -1,28 +1,27 @@
 const ChatModel = require("../models/chatmodel");
 
-async function sendMessage(req, res) {
+async function sendMessage(msg) {
   try {
-    const { receiver, message } = req.body;
-    const sender = req.user?.user_id||{}; 
+    const { receiver, message, sender} = msg;
 
-    if (!receiver || !message) {
-      return res.status(400).json({ error: "receiver and message required" });
+    if ((!receiver || !sender)) {
+      throw 'receiver and sender required'
     }
 
-    const chat = await ChatModel.create({ sender, receiver, message });
-    res.json({ message: "sent", data: chat });
+    await ChatModel.create({ sender, receiver, message });
+    return true
 
   } catch (err) {
-    console.error("sendMessage error:", err);
-    res.status(500).json({ error: "server error" });
+    throw 'could not send message'
   }
 }
 
 async function getChatHistory(req, res) {
   try {
-    const userId = req.user.user_id||{};
+    const userId = req.user||{};
     const { otherUserId } = req.params;
 
+    console.log(userId, otherUserId)
     const chats = await ChatModel.find({
       $or: [
         { sender: userId, receiver: otherUserId },

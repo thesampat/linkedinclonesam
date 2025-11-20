@@ -14,7 +14,6 @@ const authUser = async (req, res) => {
       return res.status(400).send({ message: "No Google token received" });
     }
 
-    // VERIFY GOOGLE TOKEN
     const ticket = await client.verifyIdToken({
       idToken: googleid,
       audience: process.env.WEB_CLIENT_ID,
@@ -23,8 +22,7 @@ const authUser = async (req, res) => {
     const payload = ticket.getPayload();
     const { email, name, picture, sub, exp } = payload;
 
-    // CHECK USER IN DB
-    let user = await UserModel.findOne({ email });
+    let user = await UserModel.findOne({ email }).lean();
 
     if (!user) {
       user = await UserModel.create({
@@ -32,17 +30,20 @@ const authUser = async (req, res) => {
         email,
         picture,
         googleId: sub,
-      });
+      }).lean();
     }
+
+
+    const friendDoc = await FriendModel.findOne({ user: user?._id }).lean();
 
     return res.status(200).send({
       message: "User login successful",
-      data: user,
+      data: {...user, friends:friendDoc?.friends},
     });
 
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Server error" });
+    return res.status(500).send({ message:'Invalid Google token'});
   }
 };
 
