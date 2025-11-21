@@ -12,11 +12,11 @@ const fs = require('fs')
 app.use(express.json())
 app.use(cookieParser('anhsecre'))
 app.use(cors({}))
-app.use(express.static('uploads'))
+app.use(express.static('/opt/render/project/src/upload'))
 
 
 app.get("/uploads/:filename", (req, res) => {
-  const filePath = path.join(__dirname, "uploads", req.params.filename);
+  const filePath = path.join(__dirname, "opt/render/project/src/upload", req.params.filename);
 
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
