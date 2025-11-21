@@ -15,7 +15,7 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
-process.on("SIGTERM", () => {
-  mongoose.connection.close();
-  console.log("MongoDB disconnected due to SIGTERM");
-});
+// process.on("SIGTERM", () => {
+//   mongoose.connection.close();
+//   console.log("MongoDB disconnected due to SIGTERM");
+// });
