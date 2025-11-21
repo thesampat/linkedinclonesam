@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { createPost, getPosts } from "../services/postsServices";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useGetLoginUser } from "../customHooks";
 import { socket } from "../socket";
 import { IoClose } from "react-icons/io5";
 import { MdPermMedia } from "react-icons/md";
 import { toast } from "react-toastify";
 import { IoMdChatbubbles } from "react-icons/io";
+import { useSelector } from "react-redux";
 
 
 
@@ -16,6 +17,7 @@ export default function Feed() {
   const [posts, setPosts] = useState([]);
   const navigate = useNavigate();
   const loginUser = useGetLoginUser()
+  const friends = useSelector(state=>state?.user?.friends)
 
   const fetchPosts = () => {
     getPosts().then((res) => {
@@ -23,21 +25,16 @@ export default function Feed() {
     });
   }
   useEffect(() => {
-
-    if (loginUser?._id) {
-      socket.emit('join-room', loginUser._id);
-    }
-
     fetchPosts()
   }, [loginUser]);
 
 
   const handleChat = async (post) => {
     let { _id, name, picture } = post?.authorData || {}
-    if (loginUser?.friends?.includes(post?.author)) {
-      navigate(`/chat/${post.authorData?._id}/${post.authorData?.name}`)
+    if (friends?.includes(post?.author)||loginUser?.friends?.includes(post?.author)) {
+      navigate(`/chat/${_id}/${name}/${encodeURIComponent(picture)}`)
     } else {
-      socket.emit('friend-request', { receiver: post?.authorData?._id, name, picture, sender: loginUser._id })
+      socket.emit('friend-request', { receiver: post?.authorData?._id, name, sender: loginUser._id, receiver_picture:picture, sender_picture:loginUser?.picture })
     }
 
   }

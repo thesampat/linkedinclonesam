@@ -3,6 +3,8 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
   loginUser: {},
   status: false,
+  online_users:[],
+  friends:[]
 };
 
 const userSlice = createSlice({
@@ -24,9 +26,12 @@ const userSlice = createSlice({
       if (!state.friends?.some(f => f._id === friend._id)) {
         state?.friends?.push(friend);
       }
+    },
+    set_online_users(state, action){
+      state.online_users= action.payload
     }
   }
 });
 
-export const { set_login_user, set_user_status, set_friends } = userSlice.actions
+export const { set_login_user, set_user_status, set_friends, set_online_users } = userSlice.actions
 export default userSlice.reducer

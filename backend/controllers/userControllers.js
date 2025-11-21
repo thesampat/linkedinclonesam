@@ -94,19 +94,17 @@ const sendFriendRequest = async (req, res) => {
 };
 
 
-const acceptRejectFriendRequest = async (req, res) => {
+const acceptRejectFriendRequest = async (data) => {
   try {
-    const user_id = req.user; 
-    const { friend_id, status } = req.body;
+    const { friend_id, status, user_id } = data||{}
 
     if (!user_id || !friend_id || !status) {
-      return res.status(400).json({ message: "Missing fields" });
+      return false
     }
 
-    const userId = new mongoose.Types.ObjectId(user_id);
-    const friendId = new mongoose.Types.ObjectId(friend_id);
+    const userId = user_id;
+    const friendId = friend_id;
 
-    // Remove request from both users
     await FriendModel.updateOne(
       { user: userId },
       { $pull: { friendRequests: { friendId: friendId } } }
@@ -120,19 +118,20 @@ const acceptRejectFriendRequest = async (req, res) => {
     if (status === "accepted") {
       await FriendModel.updateOne(
         { user: userId },
-        { $addToSet: { friends: friendId } }
+        { $addToSet: { friends: friendId } }, {upsert:true}
       );
       await FriendModel.updateOne(
         { user: friendId },
-        { $addToSet: { friends: userId } }
+        { $addToSet: { friends: userId } }, {upsert:true}
       );
     }
 
-    return res.json({ message: `Friend request ${status}` });
+    console.log('accepted')
+    return true;
 
   } catch (error) {
     console.error("Friend request action error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return false;
   }
 };
 

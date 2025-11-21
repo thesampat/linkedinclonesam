@@ -12,7 +12,7 @@ const approuters = createBrowserRouter(createRoutesFromElements(
         <Route element={<ProtectedRoute />}>
         
       </Route>
-      <Route path="chat/:user/:name" element={<ChatPage />} />
+      <Route path="chat/:user/:name/:picture" element={<ChatPage />} />
           <Route path="home" element={<Feed />} />
          <Route index element={<GoogleLogin />} />
         <Route path="*" element={<h1>Page not found</h1>} />

@@ -1,10 +1,10 @@
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { NavLink, Outlet, UNSAFE_useFogOFWarDiscovery, useNavigate } from "react-router";
 import { useGetLoginUser } from "./customHooks";
 import { useDispatch } from "react-redux";
 import { socket } from "./socket";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { set_friends } from "../redux/reduxslice";
+import { set_friends, set_online_users } from "../redux/reduxslice";
 import { IoSearch } from "react-icons/io5";
 import { BiSolidHome } from "react-icons/bi";
 import { IoPeopleSharp } from "react-icons/io5";
@@ -52,12 +52,36 @@ export default function Layout() {
   const navi = useNavigate();
   const user = useGetLoginUser();
   const [open, setOpen] = useState(false);
+  const dispatch = useDispatch()
 
 
   const userRef = useRef();
   useEffect(() => {
     userRef.current = user;
+     if (userRef.current?._id) {
+    }
   }, [user]);
+
+  useEffect(() => {
+    console.log('is user exisist', user?._id)
+    if(user?._id){
+      console.log('rinnnn', user?._id)
+      socket.emit('join-room', user?._id);
+    }
+  
+  return () => {
+    // socket.off("user-online");   //on logout
+  };
+}, [user]);
+
+useEffect(()=>{
+   socket.on('user-online', (msg) => {
+    console.log('user online now', msg)
+    dispatch(set_online_users(msg))
+   })
+
+  return () => socket.off("user-online");
+}, [])
 
   useEffect(() => {
     const handleToastClose = (res, msg) => {
@@ -72,12 +96,14 @@ export default function Layout() {
           user: msg,
         });
 
-        navi(`chat/${msg?.sender}/${msg?.name}`);
+        dispatch(set_friends(msg?.sender))
+
+        navi(`chat/${msg?.sender}/${msg?.name}/${encodeURIComponent(msg?.sender_picture)}`);
       }
     };
 
     socket.on("friend-request", (msg) => {
-      const { friend, name, picture } = msg?.msg || {};
+      const { name } = msg?.msg || {};
 
       toast.info(
         () => (
@@ -91,7 +117,8 @@ export default function Layout() {
     });
 
     socket.on("friend-response", (msg) => {
-      navi(`chat/${msg?.receiver}/${msg?.name}`);
+      dispatch(set_friends(msg?.receiver))
+      navi(`chat/${msg?.receiver}/${msg?.name}/${encodeURIComponent(msg?.receiver_picture)}`);
     });
   }, []);
 
