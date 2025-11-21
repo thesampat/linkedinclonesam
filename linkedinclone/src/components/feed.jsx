@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { createPost, getPosts } from "../services/postsServices";
+import { createPost, getPosts, removePost, updatePost } from "../services/postsServices";
 import { useNavigate } from "react-router";
 import { useGetLoginUser } from "../customHooks";
 import { socket } from "../socket";
@@ -51,14 +51,13 @@ export default function Feed() {
 
 
       </div>
-      {open && <CreatePost close={() => setOpen(false)} fetchPosts={fetchPosts} />}
+      {open && <CreatePost close={() => setOpen(false)} fetchPosts={fetchPosts} open={open}/>}
     </div>
   );
 }
 
 
 const CenterFeed = ({ loginUser, setOpen, posts, handleChat }) => {
-
   useEffect(() => {
     const videos = document.querySelectorAll("video");
 
@@ -98,7 +97,8 @@ const CenterFeed = ({ loginUser, setOpen, posts, handleChat }) => {
             key={post?._id}
             className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
           >
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-start justify-between gap-3 p-3">
+              <div className="flex items-center gap-3">
               <img
                 src={post?.authorData?.picture}
                 className="w-10 h-10 rounded-full object-cover"
@@ -111,6 +111,8 @@ const CenterFeed = ({ loginUser, setOpen, posts, handleChat }) => {
                   {new Date(post?.createdAt).toLocaleDateString()}
                 </p>
               </div>
+              </div>
+              {post?.authorData?._id === loginUser?._id && <button onClick={()=>setOpen(post)} className="text-black">Edit</button>}
             </div>
 
             <div className="px-3 pb-3 text-gray-800 text-sm text-start bg-gray-50">
@@ -195,19 +197,36 @@ const RightFeed = () => {
   </div>)
 }
 
+function getFileType(filename, setFileType) {
+  if (!filename) return null;
+  const ext = filename.split(".").pop().toLowerCase();
 
-const CreatePost = ({ close, fetchPosts }) => {
-  const [content, setContent] = useState("");
+  if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) setFileType("image");
+  if (["mp4", "mov", "mkv", "avi", "webm"].includes(ext)) setFileType("video");
+
+  return "other";
+}
+
+const CreatePost = ({ close, fetchPosts, open }) => {
+  const [content, setContent] = useState(open?.content);
   const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
+  const [filePreview, setFilePreview] = useState();
   const [fileType, setFileType] = useState(null);
   const loginUser = useGetLoginUser()
 
+
+  useEffect(()=>{
+    if(open?.file){
+          getFileType(open?.file, setFileType)
+          setFilePreview(open?.file);
+    }
+  }, [])
 
   const handleFile = (e) => {
     const uploaded = e.target.files?.[0];
     if (!uploaded) return;
 
+    console.log(e.target.files?.[0], 'check Files')
     setFile(uploaded);
 
     const type = uploaded.type;
@@ -233,7 +252,7 @@ const CreatePost = ({ close, fetchPosts }) => {
     }
 
     try {
-      await createPost({ data: formData })
+      await open?._id ? updatePost({ data: formData, id:open?._id }) :createPost({ data: formData })
       toast.success("post created")
       fetchPosts()
       close()
@@ -242,6 +261,15 @@ const CreatePost = ({ close, fetchPosts }) => {
       console.log(err);
     }
   };
+
+
+  const getPreviewUrl = () => {
+  if (!filePreview) return "";
+
+  if (filePreview.startsWith("blob:")) return filePreview;
+
+  return `${import.meta.env.VITE_SERVER_URL}/${filePreview}`;
+};
 
   return (
     <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
@@ -271,20 +299,19 @@ const CreatePost = ({ close, fetchPosts }) => {
           className="w-full text-black mt-4 p-4 h-32 outline-none resize-none text-lg"
         />
 
-        {/* PREVIEW */}
+
         {filePreview && fileType === "image" && (
           <div className="mt-3">
-            <img src={filePreview} className="rounded-lg max-h-60 object-cover" />
+            <img src={getPreviewUrl()} className="rounded-lg max-h-60 object-cover" />
           </div>
         )}
 
         {filePreview && fileType === "video" && (
           <div className="mt-3">
-            <video src={filePreview} className="rounded-lg max-h-60 w-full" controls />
+            <video src={getPreviewUrl()} className="rounded-lg max-h-60 w-full" controls />
           </div>
         )}
 
-        {/* UPLOAD BUTTON */}
         <div className="mt-4">
           <label className="cursor-pointer flex items-center">
             <MdPermMedia className="w-8 h-8 text-gray-600" />
@@ -298,7 +325,21 @@ const CreatePost = ({ close, fetchPosts }) => {
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end m-4">
+        <div className="mt-6 flex justify-between m-4 ">
+          {open?._id && <button
+            onClick={()=>removePost({id:open?._id}).then(res=>{
+              toast.success('post deleted')
+              close()
+              fetchPosts()
+            })}
+            disabled={!content && !file}
+            className={`px-6 py-2 rounded-full text-white font-semibold
+              ${content || file ? "bg-red-600 hover:bg-red-700"
+                : "bg-gray-300 cursor-not-allowed"}
+            `}
+          >
+            Delete
+          </button>}
           <button
             onClick={handlePost}
             disabled={!content && !file}
@@ -307,7 +348,7 @@ const CreatePost = ({ close, fetchPosts }) => {
                 : "bg-gray-300 cursor-not-allowed"}
             `}
           >
-            Post
+            {open?._id ?"Update" :"Post"}
           </button>
         </div>
 

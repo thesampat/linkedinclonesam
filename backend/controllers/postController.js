@@ -9,6 +9,7 @@ const create_post = async (req, res) => {
     const user_id = req.user
     const file = req.files?.[0];
 
+    
     console.log(req.body, 'why not okay please')
 
 
@@ -43,7 +44,7 @@ const update_post = async (req, res) => {
       },
       {
         content: content,
-        file: req.file ? `${req.file.filename}` : undefined,
+        file: req.files?.[0] ? `${req.files?.[0].filename}` : undefined,
       },
       { new: true }
     );

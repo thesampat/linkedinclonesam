@@ -17,5 +17,4 @@ async function getPosts() {
     return res.data;
 }
 
-
 export {createPost, updatePost, removePost, getPosts}
