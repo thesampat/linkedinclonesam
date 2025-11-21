@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: linkedin-socket-server
+    env: node
+    plan: free
+    region: singapore
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 4000
