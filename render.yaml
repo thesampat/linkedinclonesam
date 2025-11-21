@@ -10,3 +10,7 @@ services:
     envVars:
       - key: PORT
         value: 4000
+      - key: WEB_CLIENT_ID
+        value: 612430225084-30lsbg2fbguhngr0p9f3dkbfllfv45lj.apps.googleusercontent.com
+      - key: MONGO_URL
+        value: mongodb+srv://sampat4123:z4rTShD2xtNSLJtC@cluster0.5o11s.mongodb.net/LinkedInClone?retryWrites=true&w=majority&appName=Cluster0
