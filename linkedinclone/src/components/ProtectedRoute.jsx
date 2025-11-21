@@ -1,15 +1,13 @@
-import { Navigate } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { useSelector } from "react-redux";
 import { useGetLoginUser } from "../customHooks";
 
 export default function ProtectedRoute({ children }) {
-  const user = useGetLoginUser()
+  const user = useSelector(state=>state?.user?.status)
 
-  console.log('what is status', user)
-
-  if (!user?.status) {
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <Outlet/>;
 }

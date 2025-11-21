@@ -10,11 +10,11 @@ import Feed from "./components/feed";
 const approuters = createBrowserRouter(createRoutesFromElements(
     <Route path="/" element={<Layout/>}>
         <Route element={<ProtectedRoute />}>
-        
+              <Route path="chat/:user/:name/:picture" element={<ChatPage />} />
+          <Route path="feed" element={<Feed />} />
+
       </Route>
-      <Route path="chat/:user/:name/:picture" element={<ChatPage />} />
-          <Route path="home" element={<Feed />} />
-         <Route index element={<GoogleLogin />} />
+        <Route index element={<GoogleLogin />} />
         <Route path="*" element={<h1>Page not found</h1>} />
     </Route>
 ));

@@ -57,11 +57,12 @@ export default function GoogleLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-      <div className="bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-white text-center mb-6">
-          Login with Google
-        </h1>
+    <div className="mt-40">
+      <div className="rounded-2xl w-full flex flex-col jus">
+        <p className="text-4xl text-black text-center mb-6">
+          Find jobs, connections, insights and more to grow your career
+
+        </p>
 
         <div id="googleSignInDiv" className="flex justify-center"></div>
 

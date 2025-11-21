@@ -56,14 +56,13 @@ app.get('/', (req, res) => {
 const userRouter = require('./routes/userRoutes')
 const postRouter = require('./routes/postRoutes')
 const chatRouter = require('./routes/chatRoutes')
-const { error } = require('console')
 const googleAuth = require('./middlewear/googleauth')
 const { sendMessage } = require('./controllers/chatController')
 const { acceptRejectFriendRequest } = require('./controllers/userControllers')
 
 
 app.use('/auth', userRouter)
-app.use('/post', googleAuth ,postRouter)
+app.use('/post', googleAuth, postRouter)
 app.use('/chat', googleAuth, chatRouter)
 
 
@@ -80,8 +79,6 @@ const io = new Server(server, {
 const users = new Set()
 
 io.on("connection", (socket) => {
-
-
   socket.on("join-room", (roomId) => {
     console.log('join-room', roomId)
     socket.roomId = roomId;
@@ -91,8 +88,8 @@ io.on("connection", (socket) => {
   });
 
 
-  socket.on('join-chat', (roomId)=>{
-     socket.join(roomId);
+  socket.on('join-chat', (roomId) => {
+    socket.join(roomId);
   })
 
   socket.on('chat', async (msg) => {
@@ -101,12 +98,12 @@ io.on("connection", (socket) => {
   })
 
   socket.on('friend-response', async (msg) => {
-    await acceptRejectFriendRequest({user_id:msg?.user?.sender, friend_id:msg?.user?.receiver, status:msg?.status})
+    await acceptRejectFriendRequest({ user_id: msg?.user?.sender, friend_id: msg?.user?.receiver, status: msg?.status })
     io.to(msg?.user?.sender).emit("friend-response", msg?.user)
   })
-  
+
   socket.on('friend-request', async (msg) => {
-    io.to(msg.receiver).emit("friend-request", {msg})
+    io.to(msg.receiver).emit("friend-request", { msg })
   })
 
   socket.on("disconnect", () => {
@@ -114,10 +111,6 @@ io.on("connection", (socket) => {
     io.emit("user-online", [...users]);
   });
 });
-
-
-
-
 
 
 
