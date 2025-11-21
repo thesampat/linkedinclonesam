@@ -83,7 +83,7 @@ const CenterFeed = ({ loginUser, setOpen, posts, handleChat }) => {
   }, [posts]);
 
   return (
-    <div className="basis-7xl order-2">
+    <div className="w-full md:basis-7xl order-2">
       <div className="profilesection bg-white flex justify-center items-center p-5 gap-3 rounded-lg border border-gray-300/80">
         <img src={loginUser?.picture} className="w-12 h-12 rounded-full" alt="" />
         <button onClick={() => setOpen(true)} className=" w-full h-12 text-start text-gray-600 ps-5 font-semibold cursor-pointer  border bg-none border-gray-500 outline-none rounded-full">
