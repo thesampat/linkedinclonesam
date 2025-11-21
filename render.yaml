@@ -3,6 +3,7 @@ services:
     name: linkedin-socket-server
     env: node
     plan: free
+    rootDirectory: backend
     region: singapore
     buildCommand: "npm install"
     startCommand: "node server.js"
