@@ -13,5 +13,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port:  22
           script: |
-            whoami
-            ls -al
+            cd /var/www/linkedinclonesam
+            cd backend
+            npm install
+            pm2 restart linkapi
+            cd ..
+            cd linkedinclone
+            npm install
+            npm run build
+            
