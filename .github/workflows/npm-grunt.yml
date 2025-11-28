@@ -17,6 +17,7 @@ jobs:
             source "$NVM_DIR/nvm.sh"
            
             cd /var/www/linkedinclonesam
+            git pull origin main
             cd backend
             npm install
             pm2 restart linkapi
