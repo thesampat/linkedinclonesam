@@ -13,6 +13,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port:  22
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+           
             cd /var/www/linkedinclonesam
             cd backend
             npm install
