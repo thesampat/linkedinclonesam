@@ -1,13 +1,17 @@
 const express = require('express')
 const app = express()
-require('./db')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { Server } = require("socket.io");
 const http = require("http");
 const path = require('path')
 const fs = require('fs')
+const dotenv = require('dotenv')
 
+dotenv.config({})
+
+
+require('./db')
 
 app.use(express.json())
 app.use(cookieParser('anhsecre'))
