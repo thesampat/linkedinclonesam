@@ -9,11 +9,11 @@ mongoose.connection.on('error', err => {
 console.error('Mongoose connection error:', err);
 });
 
-process.on("SIGINT", async () => {
-  await mongoose.connection.close();
-  console.log("MongoDB disconnected due to app termination");
-  process.exit(0);
-});
+// process.on("SIGINT", async () => {
+//   await mongoose.connection.close();
+//   console.log("MongoDB disconnected due to app termination");
+//   process.exit(0);
+// });
 
 // process.on("SIGTERM", () => {
 //   mongoose.connection.close();

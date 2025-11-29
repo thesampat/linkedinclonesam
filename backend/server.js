@@ -10,7 +10,7 @@ const dotenv = require('dotenv')
 
 dotenv.config({})
 
-
+require('./s3')
 require('./db')
 
 app.use(express.json())
