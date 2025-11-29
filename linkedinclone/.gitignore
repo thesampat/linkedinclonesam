@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+*package-lock.json
 ..tttt
 
 # Editor directories and files
