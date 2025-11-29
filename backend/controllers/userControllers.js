@@ -30,7 +30,7 @@ const authUser = async (req, res) => {
         email,
         picture,
         googleId: sub,
-      }).lean();
+      });
     }
 
 
