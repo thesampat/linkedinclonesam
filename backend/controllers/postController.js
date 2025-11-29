@@ -28,7 +28,7 @@ const create_post = async (req, res) => {
 
     res.send({ message: "Post created", data: newPost });
   } catch (err) {
-    console.log(err);
+    console.log(err, 'cin errro');
     res.status(500).send({ message: "Server error" });
   }
 };

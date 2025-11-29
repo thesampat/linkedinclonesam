@@ -122,10 +122,10 @@ const CenterFeed = ({ loginUser, setOpen, posts, handleChat }) => {
             {post?.file && (
               <div className="w-full bg-gray-50">
                 {post?.file.endsWith(".mp4") ? (
-                  <video muted playsInline src={import.meta.env.VITE_SERVER_URL + "uploads/" + post?.file} controls className="w-full" />
+                  <video muted playsInline src={post?.file} controls className="w-full" />
                 ) : (
                   <img
-                    src={import.meta.env.VITE_SERVER_URL + post?.file}
+                    src={post?.file}
                     className="w-full max-h-[380px] object-cover"
                   />
                 )}
@@ -252,12 +252,15 @@ const CreatePost = ({ close, fetchPosts, open }) => {
     }
 
     try {
-      await open?._id ? updatePost({ data: formData, id:open?._id }) :createPost({ data: formData })
+      toast.loading('please wait')
+      
+      open?._id ? await updatePost({ data: formData, id:open?._id }) : await createPost({ data: formData })
+      toast.dismiss()
       toast.success("post created")
       fetchPosts()
       close()
-      close();
     } catch (err) {
+      toast.dismiss()
       console.log(err);
     }
   };
