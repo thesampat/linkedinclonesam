@@ -7,6 +7,7 @@ const http = require("http");
 const path = require('path')
 const fs = require('fs')
 const dotenv = require('dotenv')
+const multer = require('multer')()
 
 dotenv.config({})
 
@@ -62,12 +63,19 @@ const postRouter = require('./routes/postRoutes')
 const chatRouter = require('./routes/chatRoutes')
 const googleAuth = require('./middlewear/googleauth')
 const { sendMessage } = require('./controllers/chatController')
-const { acceptRejectFriendRequest } = require('./controllers/userControllers')
+const { acceptRejectFriendRequest } = require('./controllers/userControllers');
+const { uploadS3File } = require('./s3');
 
 
 app.use('/auth', userRouter)
-app.use('/post', googleAuth, postRouter)
+app.use('/post',  googleAuth,postRouter)
 app.use('/chat', googleAuth, chatRouter)
+app.get('/s3/:ty', multer.any() ,(req, res)=>{
+    let {ty} = req.params
+    if(ty==='upload'){
+      uploadS3File(req.files?.[0])
+    }
+})
 
 
 const server = http.createServer(app);

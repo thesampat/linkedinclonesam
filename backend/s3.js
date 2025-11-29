@@ -9,10 +9,24 @@ const client = new AWS.S3({
     },
 });
 
+const uploadS3File = async (file) => {
+    console.log(file)
+    client.putObject({
+        Bucket: 'amzn-sam',
+        Key: file?.originalname,
+        Body: file?.buffer,
+        ContentType: file?.mimetype,
+        ContentDisposition: 'inline'
+    }, (err, data) => {
+        if (err) {
+            console.log('Error uploading file:', err);
+            throw Error('error uplaodign')
+        } else {
+            let url = `https://amzn-sam.s3.eu-north-1.amazonaws.com/${file?.originalname}`
+            console.log(url, data)
+            return url
+        }
+    })
+}
 
-
-client.listObjects().then(res=>{
-    console.log(res)
-})
-
-module.exports = client;
+module.exports = { uploadS3File };
